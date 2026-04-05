@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ryan Sellier — UX/UI Designer & Developer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050510; --blue: #0070D1; --electric: #00AAFF;
+      --glow: rgba(0,170,255,0.6); --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08); --text: #E8E8FF;
+      --text-muted: rgba(232,232,255,0.5);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; cursor: none; }
+    .cursor { position: fixed; width: 12px; height: 12px; background: var(--electric); border-radius: 50%; pointer-events: none; z-index: 99999; transform: translate(-50%,-50%); transition: transform 0.1s; box-shadow: 0 0 20px var(--electric),0 0 40px var(--glow); }
+    .cursor-ring { position: fixed; width: 40px; height: 40px; border: 1.5px solid rgba(0,170,255,0.5); border-radius: 50%; pointer-events: none; z-index: 99998; transform: translate(-50%,-50%); transition: width 0.2s,height 0.2s,border-color 0.2s; }
+    #particles-canvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+    .scanlines { position: fixed; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none; background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px); }
+    .glow-orb { position: fixed; border-radius: 50%; filter: blur(140px); pointer-events: none; z-index: 0; }
+    .orb-1 { width:700px; height:700px; background:rgba(0,112,209,0.07); top:-250px; right:-150px; }
+    .orb-2 { width:500px; height:500px; background:rgba(0,170,255,0.05); bottom:50px; left:-150px; }
+    .page-wrapper { position: relative; z-index: 2; }
+
+    /* NAV */
+    .ps5-nav { position:fixed; top:0; left:0; right:0; z-index:1000; display:flex; align-items:center; justify-content:space-between; padding:0 48px; height:68px; background:rgba(5,5,16,0.8); backdrop-filter:blur(24px); border-bottom:1px solid var(--glass-border); }
+    .nav-left { display:flex; align-items:center; gap:28px; }
+    .nav-logo-link { display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:10px; overflow:visible; background:transparent; border:none; flex-shrink:0; text-decoration:none; transition:border-color 0.2s,box-shadow 0.2s; }
+    .nav-logo-link:hover { border-color:var(--electric); box-shadow:0 0 20px rgba(0,170,255,0.3); }
+    .nav-logo-link img { width:42px; height:42px; object-fit:contain; border-radius:10px; }
+    .nav-links { display:flex; gap:4px; list-style:none; }
+    .nav-links a { color:var(--text-muted); text-decoration:none; font-size:13px; font-weight:500; padding:7px 16px; border-radius:20px; transition:all 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color:white; background:rgba(0,170,255,0.12); }
+    .nav-right { display:flex; align-items:center; gap:12px; }
+    .nav-logo-right { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; overflow:visible; border:none; flex-shrink:0; }
+    .nav-logo-right img { width:36px; height:36px; object-fit:contain; border-radius:10px; border:2px solid var(--electric); box-shadow:0 0 12px rgba(0,170,255,0.4); }
+    .nav-name { font-size:13px; font-weight:600; color:white; }
+
+    /* PLACEHOLDERS */
+    .img-placeholder { background:rgba(0,112,209,0.08); border:2px dashed rgba(0,170,255,0.3); border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:rgba(0,170,255,0.5); font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; gap:8px; text-align:center; padding:20px; width:100%; height:100%; }
+    .img-placeholder .ph-icon { font-size:26px; opacity:0.6; }
+
+    /* HERO */
+    .hero { min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:100px 80px 60px; position:relative; }
+    .hero-eyebrow { font-size:12px; font-weight:700; letter-spacing:5px; text-transform:uppercase; color:var(--electric); margin-bottom:28px; opacity:0; transform:translateY(20px); display:flex; align-items:center; gap:12px; }
+    .hero-eyebrow::before { content:''; width:36px; height:1px; background:var(--electric); box-shadow:0 0 8px var(--electric); }
+    .hero-name { font-size:clamp(64px,9vw,130px); font-weight:900; line-height:0.92; color:white; opacity:0; transform:translateY(30px); }
+    .glitch { position:relative; display:inline-block; }
+    .glitch::before, .glitch::after { content:attr(data-text); position:absolute; top:0; left:0; width:100%; height:100%; }
+    .glitch::before { color:#00AAFF; animation:glitch-a 4s infinite; clip-path:polygon(0 0,100% 0,100% 38%,0 38%); }
+    .glitch::after { color:#FF2D78; animation:glitch-b 4s infinite; clip-path:polygon(0 62%,100% 62%,100% 100%,0 100%); }
+    @keyframes glitch-a { 0%,88%,100%{transform:translate(0);opacity:0;} 90%{transform:translate(-4px) skewX(-3deg);opacity:1;} 92%{transform:translate(4px);opacity:1;} 94%{transform:translate(-2px);opacity:0;} }
+    @keyframes glitch-b { 0%,88%,100%{transform:translate(0);opacity:0;} 90%{transform:translate(4px) skewX(3deg);opacity:1;} 92%{transform:translate(-4px);opacity:1;} 94%{transform:translate(2px);opacity:0;} }
+    .hero-sub { font-size:clamp(14px,1.8vw,19px); font-weight:400; color:var(--text-muted); margin-top:24px; letter-spacing:1.5px; opacity:0; transform:translateY(20px); }
+    .hero-sub span { color:var(--electric); font-weight:600; }
+    .hero-cta { display:flex; gap:16px; margin-top:52px; opacity:0; transform:translateY(20px); flex-wrap:wrap; }
+    .btn-primary { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,var(--blue),#005CB5); color:white; padding:15px 36px; border-radius:50px; font-weight:600; font-size:14px; text-decoration:none; letter-spacing:0.3px; transition:all 0.3s; box-shadow:0 0 40px rgba(0,112,209,0.5); border:none; cursor:none; }
+    .btn-primary:hover { background:linear-gradient(135deg,var(--electric),var(--blue)); box-shadow:0 0 60px rgba(0,170,255,0.7); transform:translateY(-3px); }
+    .btn-cv { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,rgba(0,170,255,0.15),rgba(0,112,209,0.1)); color:var(--electric); padding:15px 36px; border-radius:50px; font-weight:600; font-size:14px; text-decoration:none; letter-spacing:0.3px; transition:all 0.3s; border:1px solid rgba(0,170,255,0.4); cursor:none; backdrop-filter:blur(10px); }
+    .btn-cv:hover { background:linear-gradient(135deg,rgba(0,170,255,0.25),rgba(0,112,209,0.2)); border-color:var(--electric); box-shadow:0 0 40px rgba(0,170,255,0.3); transform:translateY(-3px); }
+    .btn-secondary { display:inline-flex; align-items:center; gap:10px; background:var(--glass); border:1px solid rgba(0,170,255,0.25); color:var(--text); padding:15px 36px; border-radius:50px; font-weight:500; font-size:14px; text-decoration:none; letter-spacing:0.3px; transition:all 0.3s; backdrop-filter:blur(12px); cursor:none; }
+    .btn-secondary:hover { border-color:var(--electric); color:var(--electric); box-shadow:0 0 30px rgba(0,170,255,0.2); transform:translateY(-3px); }
+    .hero-scroll { position:absolute; bottom:48px; left:80px; display:flex; align-items:center; gap:14px; color:var(--text-muted); font-size:11px; letter-spacing:3px; text-transform:uppercase; opacity:0; }
+    .scroll-line { width:56px; height:1px; background:linear-gradient(90deg,transparent,var(--electric)); animation:pulse 2s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+    .ps-deco { position:absolute; right:80px; bottom:60px; display:flex; gap:10px; opacity:0.08; pointer-events:none; font-size:48px; color:white; }
+
+    /* SECTIONS */
+    section { padding:110px 80px; }
+    .section-tag { font-size:11px; font-weight:700; letter-spacing:5px; text-transform:uppercase; color:var(--electric); margin-bottom:16px; display:flex; align-items:center; gap:12px; }
+    .section-tag::before { content:''; width:28px; height:1px; background:var(--electric); box-shadow:0 0 8px var(--electric); }
+    .section-h { font-size:clamp(34px,4.5vw,60px); font-weight:900; color:white; line-height:1.05; margin-bottom:64px; }
+    .neon-sep { height:1px; margin:0 80px; background:linear-gradient(90deg,transparent 0%,var(--electric) 40%,var(--blue) 60%,transparent 100%); opacity:0.2; }
+
+    /* ABOUT */
+    #about { display:grid; grid-template-columns:420px 1fr; gap:80px; align-items:center; }
+    .about-photo-wrap { position:relative; }
+    .about-photo-frame { width:100%; aspect-ratio:3/4; border-radius:28px; overflow:hidden; position:relative; border:1px solid rgba(0,170,255,0.15); }
+    .about-photo-frame img { width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+    .about-glow-border { position:absolute; inset:-2px; border-radius:30px; z-index:-1; background:linear-gradient(135deg,rgba(0,170,255,0.4),transparent 40%,rgba(0,112,209,0.3)); }
+    .about-stat { position:absolute; bottom:-24px; right:-24px; background:rgba(8,8,32,0.9); backdrop-filter:blur(20px); border:1px solid rgba(0,170,255,0.2); border-radius:18px; padding:18px 22px; }
+    .stat-num { font-size:38px; font-weight:900; color:var(--electric); line-height:1; }
+    .stat-label { font-size:11px; color:var(--text-muted); margin-top:4px; }
+    .about-stat2 { position:absolute; top:24px; left:-24px; background:rgba(8,8,32,0.9); backdrop-filter:blur(20px); border:1px solid rgba(0,170,255,0.2); border-radius:18px; padding:14px 18px; }
+    .stat2-num { font-size:22px; font-weight:800; color:white; line-height:1; }
+    .stat2-label { font-size:10px; color:var(--text-muted); margin-top:3px; }
+    .about-content .section-h { font-size:clamp(30px,3.5vw,50px); margin-bottom:28px; }
+    .about-bio { font-size:15px; line-height:1.85; color:var(--text-muted); margin-bottom:20px; }
+    .about-bio strong { color:var(--text); font-weight:600; }
+    .about-chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
+    .chip { background:rgba(0,112,209,0.12); border:1px solid rgba(0,170,255,0.18); color:var(--electric); padding:7px 16px; border-radius:20px; font-size:12px; font-weight:600; }
+
+    /* PROJECTS */
+    #projects { padding-right:0; padding-bottom:60px; }
+    .projects-head { padding-right:80px; margin-bottom:48px; }
+    .projects-head .section-h { margin-bottom:0; }
+    .projects-track { display:flex; gap:22px; overflow-x:auto; padding:24px 80px 48px; scroll-snap-type:x mandatory; scrollbar-width:none; -ms-overflow-style:none; }
+    .projects-track::-webkit-scrollbar { display:none; }
+    .proj-card { flex:0 0 370px; scroll-snap-align:start; background:var(--glass); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; backdrop-filter:blur(20px); transition:transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94),border-color 0.3s,box-shadow 0.4s; cursor:none; position:relative; }
+    .proj-card::after { content:''; position:absolute; inset:0; border-radius:22px; background:linear-gradient(135deg,rgba(0,170,255,0.06),transparent); opacity:0; transition:opacity 0.3s; pointer-events:none; }
+    .proj-card:hover { transform:translateY(-10px) scale(1.015); border-color:rgba(0,170,255,0.45); box-shadow:0 24px 80px rgba(0,170,255,0.14),0 0 0 1px rgba(0,170,255,0.15); }
+    .proj-card:hover::after { opacity:1; }
+    .browser { width:100%; background:rgba(0,0,0,0.5); }
+    .browser-bar { display:flex; align-items:center; gap:6px; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .bd { width:8px; height:8px; border-radius:50%; }
+    .bd:nth-child(1){ background:#FF5F57; } .bd:nth-child(2){ background:#FEBC2E; } .bd:nth-child(3){ background:#28C840; }
+    .b-url { flex:1; margin:0 8px; background:rgba(255,255,255,0.05); border-radius:5px; padding:3px 10px; font-size:9px; color:var(--text-muted); }
+    .b-screen { width:100%; height:210px; overflow:hidden; position:relative; }
+    .b-screen img { width:100%; height:100%; object-fit:cover; display:block; position:absolute; top:0; left:0; }
+    .b-screen .img-placeholder { border-radius:0; border:none; }
+    .proj-status { position:absolute; top:51px; right:12px; padding:3px 10px; border-radius:20px; font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; z-index:3; }
+    .s-done { background:rgba(40,200,64,0.18); color:#28C840; border:1px solid rgba(40,200,64,0.3); }
+    .s-win  { background:rgba(255,215,0,0.18); color:#FFD700; border:1px solid rgba(255,215,0,0.3); }
+    .s-wip  { background:rgba(254,188,46,0.18); color:#FEBC2E; border:1px solid rgba(254,188,46,0.3); animation:blink 2s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+    .proj-body { padding:22px 22px 24px; }
+    .proj-year { font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--electric); margin-bottom:6px; }
+    .proj-name { font-size:18px; font-weight:800; color:white; margin-bottom:10px; line-height:1.2; }
+    .proj-desc { font-size:12.5px; color:var(--text-muted); line-height:1.65; margin-bottom:16px; }
+    .proj-chips { display:flex; flex-wrap:wrap; gap:6px; }
+    .proj-chip { background:rgba(0,112,209,0.1); border:1px solid rgba(0,170,255,0.14); color:rgba(0,170,255,0.85); padding:3px 10px; border-radius:10px; font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; }
+    .scroll-nav { display:flex; align-items:center; gap:12px; padding:0 80px; margin-top:4px; }
+    .scroll-btn { width:46px; height:46px; border-radius:50%; background:var(--glass); border:1px solid var(--glass-border); color:var(--text); display:flex; align-items:center; justify-content:center; cursor:none; transition:all 0.25s; font-size:17px; }
+    .scroll-btn:hover { background:rgba(0,170,255,0.15); border-color:var(--electric); color:var(--electric); box-shadow:0 0 20px rgba(0,170,255,0.2); }
+
+    /* SKILLS */
+    #skills { background:rgba(0,0,0,0.25); }
+    .skills-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:56px 80px; }
+    .skill-cat h3 { font-size:11px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:var(--electric); margin-bottom:28px; display:flex; align-items:center; gap:10px; }
+    .cat-icon { width:30px; height:30px; border-radius:7px; background:rgba(0,170,255,0.1); display:flex; align-items:center; justify-content:center; font-size:14px; }
+    .sk { margin-bottom:20px; }
+    .sk-head { display:flex; justify-content:space-between; margin-bottom:9px; }
+    .sk-name { font-size:14px; font-weight:500; color:var(--text); }
+    .sk-pct { font-size:12px; font-weight:800; color:var(--electric); }
+    .sk-bg { height:3px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:visible; }
+    .sk-fill { height:100%; border-radius:3px; width:0%; background:linear-gradient(90deg,var(--blue),var(--electric)); transition:width 1.3s cubic-bezier(0.25,0.46,0.45,0.94); position:relative; }
+    .sk-fill::after { content:''; position:absolute; right:-1px; top:50%; transform:translateY(-50%); width:9px; height:9px; border-radius:50%; background:var(--electric); box-shadow:0 0 12px var(--electric),0 0 24px var(--glow); }
+
+    /* TIMELINE */
+    .timeline { position:relative; padding-left:56px; max-width:700px; }
+    .timeline::before { content:''; position:absolute; left:4px; top:6px; bottom:6px; width:1px; background:linear-gradient(180deg,var(--electric),rgba(0,170,255,0.1)); }
+    .tl-item { position:relative; margin-bottom:52px; opacity:0; transform:translateX(-24px); }
+    .tl-dot { position:absolute; left:-52px; top:6px; width:10px; height:10px; border-radius:50%; background:var(--electric); border:2px solid var(--bg); box-shadow:0 0 16px var(--electric),0 0 32px var(--glow); }
+    .tl-year { font-size:10px; font-weight:700; letter-spacing:3px; color:var(--electric); text-transform:uppercase; margin-bottom:7px; }
+    .tl-school { font-size:22px; font-weight:800; color:white; margin-bottom:7px; }
+    .tl-detail { font-size:14px; color:var(--text-muted); line-height:1.6; }
+
+    /* CONTACT */
+    #contact { text-align:center; padding:130px 80px; }
+    .contact-wrap { max-width:620px; margin:0 auto; }
+    .contact-title { font-size:clamp(44px,6vw,80px); font-weight:900; color:white; line-height:1; margin-bottom:24px; }
+    .contact-title span { color:var(--electric); }
+    .contact-sub { font-size:15px; color:var(--text-muted); line-height:1.75; margin-bottom:52px; }
+    .c-links { display:flex; flex-direction:column; gap:14px; align-items:center; margin-bottom:40px; }
+    .c-link { display:flex; align-items:center; gap:14px; color:var(--text); text-decoration:none; font-size:15px; font-weight:500; padding:16px 36px; background:var(--glass); border:1px solid var(--glass-border); border-radius:60px; backdrop-filter:blur(20px); transition:all 0.3s; min-width:340px; justify-content:center; }
+    .c-link:hover { border-color:rgba(0,170,255,0.5); color:var(--electric); box-shadow:0 0 40px rgba(0,170,255,0.18); transform:translateY(-3px); }
+    .social-row { display:flex; justify-content:center; gap:14px; }
+
+    /* FOOTER */
+    footer { padding:30px 80px; border-top:1px solid var(--glass-border); display:flex; align-items:center; justify-content:space-between; }
+    .f-name { font-size:13px; color:var(--text-muted); }
+    .f-name strong { color:var(--electric); }
+    .f-ps { display:flex; gap:8px; opacity:0.12; font-size:16px; color:white; }
+
+    /* CV MODAL */
+    .cv-modal { position:fixed; inset:0; z-index:99990; display:none; align-items:center; justify-content:center; background:rgba(5,5,16,0.95); backdrop-filter:blur(20px); }
+    .cv-modal.open { display:flex; }
+    .cv-modal-inner { position:relative; max-width:90vw; max-height:90vh; border-radius:20px; overflow:hidden; border:1px solid rgba(0,170,255,0.3); box-shadow:0 0 80px rgba(0,170,255,0.2); }
+    .cv-modal-inner img { display:block; max-width:90vw; max-height:85vh; object-fit:contain; }
+    .cv-close { position:absolute; top:16px; right:16px; width:40px; height:40px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); color:white; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; z-index:10; }
+    .cv-close:hover { background:rgba(255,45,72,0.4); border-color:rgba(255,45,72,0.6); }
+
+    /* RESPONSIVE */
+    @media (max-width:900px) {
+      section { padding:80px 28px; } .hero { padding:110px 28px 70px; }
+      #about { grid-template-columns:1fr; gap:56px; } .about-stat2 { display:none; }
+      .skills-grid { grid-template-columns:1fr; gap:48px; }
+      .ps5-nav { padding:0 20px; } .nav-links { display:none; }
+      .projects-track { padding:20px 28px 40px; } .proj-card { flex:0 0 300px; }
+      .scroll-nav { padding:0 28px; } .projects-head { padding-right:28px; }
+      footer { flex-direction:column; gap:12px; text-align:center; padding:28px; }
+      .c-link { min-width:280px; } .hero-scroll { left:28px; } .neon-sep { margin:0 28px; }
+      .hero-cta { flex-direction:column; align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+<div class="glow-orb orb-1"></div>
+<div class="glow-orb orb-2"></div>
+<canvas id="particles-canvas"></canvas>
+<div class="scanlines"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- CV MODAL -->
+<div class="cv-modal" id="cv-modal" onclick="if(event.target===this)closeCv()">
+  <div class="cv-modal-inner">
+    <button class="cv-close" onclick="closeCv()">✕</button>
+    <img src="CV Ryan Sellier.png" alt="CV Ryan Sellier">
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  <!-- NAV -->
+  <nav class="ps5-nav">
+    <div class="nav-left">
+      <!-- Logo à gauche → retour haut de page -->
+      <a href="#home" class="nav-logo-link" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
+        <img src="logo RYAN SELLIER.png" alt="Logo RS" onerror="this.parentElement.innerHTML='<span style=&quot;font-weight:900;font-size:13px;color:#00AAFF;&quot;>RS</span>';">
+      </a>
+      <ul class="nav-links">
+        <li><a href="#about">À propos</a></li>
+        <li><a href="#projects">Projets</a></li>
+        <li><a href="#skills">Compétences</a></li>
+        <li><a href="#formation">Formation</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="nav-right">
+      <!-- Logo à droite -->
+      <div class="nav-logo-right">
+        <img src="logo RYAN SELLIER.png" alt="RS" onerror="this.parentElement.innerHTML='<span style=&quot;font-size:12px;font-weight:900;color:#00AAFF;&quot;>RS</span>';">
+      </div>
+      <span class="nav-name">Ryan Sellier</span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-eyebrow" id="anim-eyebrow">Portfolio 2026</div>
+    <h1 class="hero-name" id="anim-name">
+      <span class="glitch" data-text="RYAN">RYAN</span><br>
+      <span class="glitch" data-text="SELLIER">SELLIER</span>
+    </h1>
+    <p class="hero-sub" id="anim-sub">
+      <span>UX/UI Designer</span>&nbsp;&nbsp;·&nbsp;&nbsp;Developer&nbsp;&nbsp;·&nbsp;&nbsp;<span>Créateur de médias</span>
+    </p>
+    <div class="hero-cta" id="anim-cta">
+      <a href="#projects" class="btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 3l14 9-14 9V3z"/></svg>
+        Voir mes projets
+      </a>
+      <a href="#" class="btn-cv" onclick="openCv();return false;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Voir mon CV
+      </a>
+      <a href="#contact" class="btn-secondary">Me contacter</a>
+    </div>
+    <div class="hero-scroll" id="anim-scroll"><div class="scroll-line"></div>Scroll</div>
+    <div class="ps-deco">▲ ■ ✕ ●</div>
+  </section>
+
+  <div class="neon-sep"></div>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="about-photo-wrap" data-reveal>
+      <div class="about-glow-border"></div>
+      <div class="about-photo-frame">
+        <img src="ma photo.png" alt="Ryan Sellier" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';">
+        <div class="img-placeholder" style="display:none;"><span class="ph-icon">📸</span><span>ma photo.png</span></div>
+      </div>
+      <div class="about-stat"><div class="stat-num">450K+</div><div class="stat-label">Abonnés INKU</div></div>
+      <div class="about-stat2"><div class="stat2-num">🏆 ×2</div><div class="stat2-label">Appels d'offres gagnés</div></div>
+    </div>
+    <div class="about-content" data-reveal>
+      <div class="section-tag">À propos</div>
+      <h2 class="section-h">Designer,<br>Développeur<br>&amp; Créateur.</h2>
+      <p class="about-bio">Étudiant en <strong>3ème année du Programme Grande École à HETIC</strong>, je suis passionné par l'intersection entre design, technologie et création de contenu.</p>
+      <p class="about-bio">Co-fondateur d'<strong>INKU</strong>, premier média français dédié aux animés et mangas avec <strong>450K+ abonnés</strong> et des collaborations avec <strong>Netflix, Celio et Glénat</strong>. J'allie sens créatif et rigueur technique pour créer des expériences numériques mémorables.</p>
+      <p class="about-bio">De la conception UX/UI sur <strong>Figma</strong> au développement No-Code et Code, en passant par la stratégie digitale et l'automatisation, chaque projet est une opportunité de repousser les limites.</p>
+      <div class="about-chips">
+        <span class="chip">🎓 HETIC Grande École</span><span class="chip">🇫🇷 Paris</span>
+        <span class="chip">🌐 Anglais B2</span><span class="chip">📱 UX/UI Design</span>
+        <span class="chip">⚡ No-Code</span><span class="chip">🎌 Co-fondateur INKU</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="neon-sep"></div>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="projects-head" data-reveal>
+      <div class="section-tag">Projets</div>
+      <h2 class="section-h">Ce que j'ai créé.</h2>
+    </div>
+    <div class="projects-track" id="proj-track">
+
+      <!-- 1 INKU App -->
+      <div class="proj-card" data-reveal>
+        <div class="browser"><div class="browser-bar"><div class="bd"></div><div class="bd"></div><div class="bd"></div><div class="b-url">inku-app.flutterflow.app</div></div>
+          <div class="b-screen"><img src="application inku.png" alt="App INKU" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';"><div class="img-placeholder" style="display:none;"><span class="ph-icon">📱</span><span>application inku.png</span></div></div>
+        </div>
+        <span class="proj-status s-wip">⚡ En cours</span>
+        <div class="proj-body">
+          <div class="proj-year">2026</div><div class="proj-name">Application INKU</div>
+          <div class="proj-desc">Application mobile pour le média INKU. Conception UX/UI sur Figma et développement No-Code sur Flutterflow.</div>
+          <div class="proj-chips"><span class="proj-chip">Figma</span><span class="proj-chip">Flutterflow</span><span class="proj-chip">UX/UI</span><span class="proj-chip">Mobile</span></div>
+        </div>
+      </div>
+
+      <!-- 2 Betclic -->
+      <div class="proj-card" data-reveal>
+        <div class="browser"><div class="browser-bar"><div class="bd"></div><div class="bd"></div><div class="bd"></div><div class="b-url">betclic-solution.design</div></div>
+          <div class="b-screen"><img src="betclic projet.png" alt="Betclic" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';"><div class="img-placeholder" style="display:none;"><span class="ph-icon">🏆</span><span>betclic projet.png</span></div></div>
+        </div>
+        <span class="proj-status s-win">🥇 Gagnant</span>
+        <div class="proj-body">
+          <div class="proj-year">2025</div><div class="proj-name">Appel d'offre Betclic</div>
+          <div class="proj-desc">Solution innovante combinant analyse du marché des paris sportifs, data prédictive, IA et refonte UX/UI en cohérence avec l'identité Betclic.</div>
+          <div class="proj-chips"><span class="proj-chip">UX/UI</span><span class="proj-chip">Data</span><span class="proj-chip">IA</span><span class="proj-chip">Figma</span></div>
+        </div>
+      </div>
+
+      <!-- 3 Espace des Arts -->
+      <div class="proj-card" data-reveal>
+        <div class="browser"><div class="browser-bar"><div class="bd"></div><div class="bd"></div><div class="bd"></div><div class="b-url">espacedesarts-refonte.figma</div></div>
+          <div class="b-screen"><img src="espace des arts.png" alt="Espace des Arts" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';"><div class="img-placeholder" style="display:none;"><span class="ph-icon">🎨</span><span>espace des arts.png</span></div></div>
+        </div>
+        <span class="proj-status s-win">✓ Gagnant</span>
+        <div class="proj-body">
+          <div class="proj-year">2025</div><div class="proj-name">Refonte Espace des Arts</div>
+          <div class="proj-desc">Conception UX/UI complète sur Figma : wireframes, prototypes interactifs et optimisation de l'expérience utilisateur pour augmenter le taux de conversion.</div>
+          <div class="proj-chips"><span class="proj-chip">Figma</span><span class="proj-chip">Wireframes</span><span class="proj-chip">Prototypage</span><span class="proj-chip">UX Research</span></div>
+        </div>
+      </div>
+
+      <!-- 4 INKU Média -->
+      <div class="proj-card" data-reveal>
+        <div class="browser"><div class="browser-bar"><div class="bd"></div><div class="bd"></div><div class="bd"></div><div class="b-url">linktr.ee/Inku_fr</div></div>
+          <div class="b-screen"><img src="inku projet.png" alt="INKU Média" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';"><div class="img-placeholder" style="display:none;"><span class="ph-icon">🎌</span><span>inku projet.png</span></div></div>
+        </div>
+        <span class="proj-status s-wip">⚡ En cours</span>
+        <div class="proj-body">
+          <div class="proj-year">2022 → Aujourd'hui</div><div class="proj-name">Média INKU</div>
+          <div class="proj-desc">Co-fondateur du 1er média français dédié aux animés et mangas. 450K+ abonnés, direction d'équipe, collaborations Netflix, Celio, Glénat.</div>
+          <div class="proj-chips"><span class="proj-chip">Branding</span><span class="proj-chip">Community</span><span class="proj-chip">Netflix</span><span class="proj-chip">Direction</span></div>
+        </div>
+      </div>
+
+      <!-- 5 Synerg'HETIC -->
+      <div class="proj-card" data-reveal>
+        <div class="browser"><div class="browser-bar"><div class="bd"></div><div class="bd"></div><div class="bd"></div><div class="b-url">junior-entreprise.hetic.net</div></div>
+          <div class="b-screen"><img src="synerg'hetic.jpg" alt="Synerg'HETIC" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';"><div class="img-placeholder" style="display:none;"><span class="ph-icon">🏛️</span><span>synerg'hetic.jpg</span></div></div>
+        </div>
+        <span class="proj-status s-wip">⚡ En cours</span>
+        <div class="proj-body">
+          <div class="proj-year">Mars 2026 → Aujourd'hui</div><div class="proj-name">Secrétaire Général JE HETIC</div>
+          <div class="proj-desc">Gestion administrative et organisation interne. Coordination des équipes et suivi des projets de la Junior Entreprise Synerg'HETIC.</div>
+          <div class="proj-chips"><span class="proj-chip">Management</span><span class="proj-chip">Organisation</span><span class="proj-chip">HETIC</span></div>
+        </div>
+      </div>
+
+      <!-- 6 PACKUN -->
+      <div class="proj-card" data-reveal>
+        <div class="browser"><div class="browser-bar"><div class="bd"></div><div class="bd"></div><div class="bd"></div><div class="b-url">packun.myshopify.com</div></div>
+          <div class="b-screen"><img src="projet packun.png" alt="PACKUN" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';"><div class="img-placeholder" style="display:none;"><span class="ph-icon">🎎</span><span>projet packun.png</span></div></div>
+        </div>
+        <span class="proj-status s-wip">⚡ En cours</span>
+        <div class="proj-body">
+          <div class="proj-year">Mars 2026 → En cours</div><div class="proj-name">Boutique PACKUN</div>
+          <div class="proj-desc">Création d'une boutique Shopify de vente de figurines. Branding complet, conception produit, UX/UI et développement e-commerce.</div>
+          <div class="proj-chips"><span class="proj-chip">Shopify</span><span class="proj-chip">Branding</span><span class="proj-chip">E-commerce</span><span class="proj-chip">UX/UI</span></div>
+        </div>
+      </div>
+
+      <!-- 7 TOOGZ -->
+      <div class="proj-card" data-reveal>
+        <div class="browser"><div class="browser-bar"><div class="bd"></div><div class="bd"></div><div class="bd"></div><div class="b-url">toogz.com</div></div>
+          <div class="b-screen"><img src="toogz.png" alt="Stage TOOGZ" onerror="this.nextElementSibling.style.display='flex';this.style.display='none';"><div class="img-placeholder" style="display:none;"><span class="ph-icon">⚙️</span><span>toogz.png</span></div></div>
+        </div>
+        <span class="proj-status s-done">✓ Terminé</span>
+        <div class="proj-body">
+          <div class="proj-year">Stage</div><div class="proj-name">Stage TOOGZ</div>
+          <div class="proj-desc">Chef de la stratégie digitale et création de contenu. Mise en place d'automatisations avancées avec N8N pour optimiser les workflows internes.</div>
+          <div class="proj-chips"><span class="proj-chip">Stratégie</span><span class="proj-chip">N8N</span><span class="proj-chip">Automation</span><span class="proj-chip">Contenu</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="scroll-nav">
+      <button class="scroll-btn" onclick="scrollProj(-1)">←</button>
+      <button class="scroll-btn" onclick="scrollProj(1)">→</button>
+      <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">Utilise les flèches ← → pour naviguer</span>
+    </div>
+  </section>
+
+  <div class="neon-sep"></div>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div data-reveal><div class="section-tag">Compétences</div><h2 class="section-h">Mon arsenal<br>technique.</h2></div>
+    <div class="skills-grid">
+      <div class="skill-cat" data-reveal>
+        <h3><span class="cat-icon">🎨</span>UX/UI Design</h3>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Figma</span><span class="sk-pct">95%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="95"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Branding & Design System</span><span class="sk-pct">88%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="88"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Wireframes & Prototypage</span><span class="sk-pct">92%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="92"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">UX Research & Tests utilisateur</span><span class="sk-pct">80%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="80"></div></div></div>
+      </div>
+      <div class="skill-cat" data-reveal>
+        <h3><span class="cat-icon">⚡</span>Code & No-Code</h3>
+        <div class="sk"><div class="sk-head"><span class="sk-name">HTML / CSS</span><span class="sk-pct">85%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="85"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">JavaScript / PHP</span><span class="sk-pct">70%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="70"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Flutterflow</span><span class="sk-pct">82%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="82"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Webflow / Shopify</span><span class="sk-pct">75%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="75"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">N8N Automation</span><span class="sk-pct">72%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="72"></div></div></div>
+      </div>
+      <div class="skill-cat" data-reveal>
+        <h3><span class="cat-icon">🎬</span>Création Visuelle</h3>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Premiere Pro</span><span class="sk-pct">95%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="95"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">After Effects</span><span class="sk-pct">72%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="72"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Photoshop / Illustrator</span><span class="sk-pct">80%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="80"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Indesign / Capcut</span><span class="sk-pct">70%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="70"></div></div></div>
+      </div>
+      <div class="skill-cat" data-reveal>
+        <h3><span class="cat-icon">🧠</span>Soft Skills & Langues</h3>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Créativité & Innovation</span><span class="sk-pct">95%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="95"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Travail d'équipe</span><span class="sk-pct">90%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="90"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Adaptabilité & Aisance orale</span><span class="sk-pct">90%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="90"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Français (natif)</span><span class="sk-pct">100%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="100"></div></div></div>
+        <div class="sk"><div class="sk-head"><span class="sk-name">Anglais (B2)</span><span class="sk-pct">75%</span></div><div class="sk-bg"><div class="sk-fill" data-pct="75"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="neon-sep"></div>
+
+  <!-- FORMATION -->
+  <section id="formation">
+    <div data-reveal><div class="section-tag">Formation</div><h2 class="section-h">Mon parcours<br>académique.</h2></div>
+    <div class="timeline">
+      <div class="tl-item" data-tl><div class="tl-dot"></div><div class="tl-year">2023 → 2028</div><div class="tl-school">HETIC — Programme Grande École</div><div class="tl-detail">Actuellement en 3ème année · Digital design, développement web, stratégie digitale, gestion de projet et entrepreneuriat.</div></div>
+      <div class="tl-item" data-tl><div class="tl-dot"></div><div class="tl-year">2021 → 2023</div><div class="tl-school">Université Paris 1 Panthéon-Sorbonne</div><div class="tl-detail">Licence Philosophie parcours Sociologie · Licence AES (Administration Économique et Sociale)</div></div>
+      <div class="tl-item" data-tl><div class="tl-dot"></div><div class="tl-year">Baccalauréat</div><div class="tl-school">Lycée Georges Clemenceau</div><div class="tl-detail">Baccalauréat Général</div></div>
+    </div>
+  </section>
+
+  <div class="neon-sep"></div>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="contact-wrap" data-reveal>
+      <div class="section-tag" style="justify-content:center;">Contact</div>
+      <h2 class="contact-title">Travaillons<br><span>ensemble.</span></h2>
+      <p class="contact-sub">Disponible pour des missions freelance, des collaborations et des opportunités.<br>N'hésite pas à me contacter directement.</p>
+      <div class="c-links">
+        <a href="mailto:r.yansellier@hotmail.com" class="c-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          r.yansellier@hotmail.com
+        </a>
+        <a href="tel:+33666875139" class="c-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.6a16 16 0 0 0 6 6l.96-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17z"/></svg>
+          06 66 87 51 39
+        </a>
+        <a href="https://www.linkedin.com/in/ryan-sellier-4272ba213" target="_blank" class="c-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zm2-3a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>
+          LinkedIn — Ryan Sellier
+        </a>
+      </div>
+      <div class="social-row">
+        <a href="https://linktr.ee/Inku_fr" target="_blank" style="font-size:14px;font-weight:700;color:var(--electric);width:auto;border-radius:40px;padding:0 28px;height:54px;display:inline-flex;align-items:center;gap:10px;background:var(--glass);border:1px solid rgba(0,170,255,0.2);text-decoration:none;transition:all 0.3s;backdrop-filter:blur(10px);" onmouseover="this.style.borderColor='rgba(0,170,255,0.5)';this.style.boxShadow='0 0 30px rgba(0,170,255,0.2)';" onmouseout="this.style.borderColor='rgba(0,170,255,0.2)';this.style.boxShadow='none';">
+          🎌 &nbsp;Réseaux INKU
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="f-name">© 2026 <strong>Ryan Sellier</strong> — Tous droits réservés</div>
+    <div class="f-ps">▲ ■ ✕ ●</div>
+  </footer>
+
+</div>
+
+<script>
+// CURSOR
+const cursor=document.getElementById('cursor'), cursorRing=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+const trails=Array.from({length:7},(_,i)=>{
+  const el=document.createElement('div');
+  el.style.cssText=`position:fixed;border-radius:50%;pointer-events:none;z-index:99997;transform:translate(-50%,-50%);background:rgba(0,170,255,${0.25-i*0.03});width:${7-i}px;height:${7-i}px;`;
+  document.body.appendChild(el); return {el,x:0,y:0};
+});
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px';});
+(function anim(){
+  rx+=(mx-rx)*0.1;ry+=(my-ry)*0.1;
+  cursorRing.style.left=rx+'px';cursorRing.style.top=ry+'px';
+  for(let i=trails.length-1;i>0;i--){trails[i].x+=(trails[i-1].x-trails[i].x)*0.35;trails[i].y+=(trails[i-1].y-trails[i].y)*0.35;trails[i].el.style.left=trails[i].x+'px';trails[i].el.style.top=trails[i].y+'px';}
+  trails[0].x+=(mx-trails[0].x)*0.4;trails[0].y+=(my-trails[0].y)*0.4;trails[0].el.style.left=trails[0].x+'px';trails[0].el.style.top=trails[0].y+'px';
+  requestAnimationFrame(anim);
+})();
+document.querySelectorAll('a,button,.proj-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.style.transform='translate(-50%,-50%) scale(2)';cursorRing.style.width='64px';cursorRing.style.height='64px';cursorRing.style.borderColor='rgba(0,170,255,0.9)';});
+  el.addEventListener('mouseleave',()=>{cursor.style.transform='translate(-50%,-50%) scale(1)';cursorRing.style.width='40px';cursorRing.style.height='40px';cursorRing.style.borderColor='rgba(0,170,255,0.5)';});
+});
+
+// PARTICLES
+const cvs=document.getElementById('particles-canvas'),ctx=cvs.getContext('2d');
+function rsz(){cvs.width=innerWidth;cvs.height=innerHeight;} rsz(); addEventListener('resize',rsz);
+class P{constructor(){this.r();} r(){this.x=Math.random()*cvs.width;this.y=Math.random()*cvs.height;this.vx=(Math.random()-.5)*.45;this.vy=(Math.random()-.5)*.45;this.rad=Math.random()*1.4+.3;this.a=Math.random()*.35+.05;this.t=Math.random()*Math.PI*2;this.ts=.008+Math.random()*.018;} update(){this.x+=this.vx;this.y+=this.vy;this.t+=this.ts;if(this.x<0||this.x>cvs.width||this.y<0||this.y>cvs.height)this.r();} draw(){const a=this.a*(0.65+.35*Math.sin(this.t));ctx.beginPath();ctx.arc(this.x,this.y,this.rad,0,Math.PI*2);ctx.fillStyle=`rgba(0,170,255,${a})`;ctx.fill();}}
+const pts=Array.from({length:90},()=>new P());
+(function ap(){ctx.clearRect(0,0,cvs.width,cvs.height);for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<110){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,112,209,${.07*(1-d/110)})`;ctx.lineWidth=.5;ctx.stroke();}} pts.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(ap);})();
+
+// GSAP
+gsap.registerPlugin(ScrollTrigger);
+gsap.timeline({delay:.2})
+  .to('#anim-eyebrow',{opacity:1,y:0,duration:.8,ease:'power3.out'})
+  .to('#anim-name',{opacity:1,y:0,duration:1,ease:'power3.out'},'-=.4')
+  .to('#anim-sub',{opacity:1,y:0,duration:.8,ease:'power3.out'},'-=.5')
+  .to('#anim-cta',{opacity:1,y:0,duration:.8,ease:'power3.out'},'-=.4')
+  .to('#anim-scroll',{opacity:1,duration:.6},'-=.2');
+document.querySelectorAll('[data-reveal]').forEach(el=>{gsap.fromTo(el,{opacity:0,y:44},{opacity:1,y:0,duration:.9,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 86%',toggleActions:'play none none none'}});});
+document.querySelectorAll('[data-tl]').forEach((el,i)=>{gsap.to(el,{opacity:1,x:0,duration:.75,delay:i*.18,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 86%',toggleActions:'play none none none'}});});
+
+// SKILL BARS
+new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.sk-fill').forEach(b=>{setTimeout(()=>{b.style.width=b.dataset.pct+'%';},150);});e.target.classList.add('done');}});},{threshold:.2}).observe(document.getElementById('skills'));
+
+// PROJECT SCROLL
+function scrollProj(d){document.getElementById('proj-track').scrollBy({left:d*400,behavior:'smooth'});}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')scrollProj(1);if(e.key==='ArrowLeft')scrollProj(-1);});
+
+// NAV ACTIVE
+addEventListener('scroll',()=>{
+  let cur=''; document.querySelectorAll('section[id]').forEach(s=>{if(scrollY>=s.offsetTop-90)cur=s.id;});
+  document.querySelectorAll('.nav-links a').forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+cur);});
+});
+
+// CV MODAL
+function openCv(){document.getElementById('cv-modal').classList.add('open');document.body.style.overflow='hidden';}
+function closeCv(){document.getElementById('cv-modal').classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCv();});
+</script>
+</body>
+</html>
